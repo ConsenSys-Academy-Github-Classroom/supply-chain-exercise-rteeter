@@ -14,7 +14,7 @@ contract SupplyChain {
   mapping (uint => Item) private items;
 
   // <enum State: ForSale, Sold, Shipped, Received>
-  enum State{ ForSale, Sold, Shipped, Received }
+  enum State { ForSale, Sold, Shipped, Received }
 
   // <struct Item: name, sku, price, state, seller, and buyer>
   struct Item {
@@ -115,7 +115,7 @@ contract SupplyChain {
   function addItem(string memory _name, uint _price) public returns (bool) {
     // 1. Create a new item and put in array
     items[skuCount] = Item({
-      name:_name, 
+      name: _name, 
       sku: skuCount, 
       price: _price, 
       state: State.ForSale, 
@@ -143,14 +143,14 @@ contract SupplyChain {
   // 6. call the event associated with this function!
   function buyItem(uint sku) 
     public 
-    payable 
+    payable
     forSale(items[sku].sku) 
     paidEnough(items[sku].price) 
-    checkValue(items[sku].sku) 
-    verifyCaller(items[sku].buyer) {
-      items[sku].state == State.Sold;
-      emit LogSold(items[sku].sku);
+    checkValue(items[sku].sku) {
       items[sku].seller.transfer(items[sku].price);
+      items[sku].buyer = msg.sender;
+      items[sku].state = State.Sold;
+      emit LogSold(items[sku].sku);
   }
 
   // 1. Add modifiers to check:
@@ -162,10 +162,10 @@ contract SupplyChain {
     public 
     sold(items[sku].sku) 
     verifyCaller(items[sku].seller) {
-      items[sku].state == State.Shipped;
+      items[sku].state = State.Shipped;
       emit LogShipped(items[sku].sku);
   }
-
+ 
   // 1. Add modifiers to check 
   //    - the item is shipped already 
   //    - the person calling this function is the buyer. 
@@ -175,8 +175,8 @@ contract SupplyChain {
     public 
     shipped(items[sku].sku)
     verifyCaller(items[sku].buyer) {
-      items[sku].state == State.Received;
-      emit LogReceived(sku);(items[sku].sku);
+      items[sku].state = State.Received;
+      emit LogReceived(items[sku].sku);
   }
 
   function fetchItem(uint _sku) public view
